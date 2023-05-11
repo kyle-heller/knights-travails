@@ -1,4 +1,4 @@
-require 'pry-byebug'
+require 'json'
 
 class Knight
   def initialize
@@ -63,9 +63,7 @@ class Knight
       return path if current == goal
 
       @graph[current].each do |neighbor|
-        unless path.include?(neighbor)
-          queue.push([neighbor, path + [neighbor]])
-        end
+        queue.push([neighbor, path + [neighbor]]) unless path.include?(neighbor)
       end
     end
 
@@ -82,4 +80,13 @@ end
 
 graph = Knight.new
 
-graph.find_path([0,0], [7,1])
+puts 'Start: [0,0]'
+puts 'Target: [3,3]'
+graph.find_path([0, 0], [3, 3])
+
+puts "\nYour turn:"
+puts 'Enter start in the following format [x,x], ex [0,0]. Max [7,7]'
+start = JSON.parse(gets.chomp)
+puts 'Enter target in the following format [x,x], ex [0,0]. Max [7,7]'
+target = JSON.parse(gets.chomp)
+graph.find_path(start, target)
