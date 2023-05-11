@@ -1,123 +1,85 @@
-require './tree.rb'
+require 'pry-byebug'
 
-position = [0,0]
-goal = [3, 3]
+class Knight
+  def initialize
+    @graph = build_graph
+  end
 
-def possible_next_moves(position)
-  # Gives list of possible next moves from a position on an infinite board, can be called recursively to get future moves
-  moves = []
-  moves << [position[0] + 1, position[1] + 2]
+  def build_graph
+    # builds graph with key for each square on board and values that correspond with moves you can make from that space
+    graph = {}
+    8.times do |x|
+      8.times do |y|
+        square = [x, y]
+        graph[square] = []
 
-  moves << [position[0] + 2, position[1] + 1]
+        moves = possible_moves(square)
 
-  moves << [position[0] + 1, position[1] - 2]
+        moves.each do |move|
+          destination_square = move
+          graph[square] << destination_square unless graph[square].include?(destination_square)
+        end
+      end
+    end
 
-  moves << [position[0] + 2, position[1] - 1]
+    graph
+  end
 
-  moves << [position[0] - 1, position[1] - 2]
+  def possible_moves(square)
+    # Gives a list of possible next moves from a position on an infinite board, can be called recursively to get future moves
+    moves = []
+    unless square.nil?
+      moves << [square[0] + 1, square[1] + 2]
+      moves << [square[0] + 2, square[1] + 1]
+      moves << [square[0] + 1, square[1] - 2]
+      moves << [square[0] + 2, square[1] - 1]
+      moves << [square[0] - 1, square[1] - 2]
+      moves << [square[0] - 2, square[1] - 1]
+      moves << [square[0] - 1, square[1] + 2]
+      moves << [square[0] - 2, square[1] + 1]
+    end
+    check_if_on_board(moves)
+  end
 
-  moves << [position[0] - 2, position[1] - 1]
+  def check_if_on_board(moves)
+    # checks if move is on board
+    return if moves.nil?
 
-  moves << [position[0] - 1, position[1] + 2]
+    available_moves = []
+    moves.each do |move|
+      available_moves << move if move[0].between?(0, 7) && move[1].between?(0, 7)
+    end
+    available_moves
+  end
 
-  moves << [position[0] - 2, position[1] + 1]
-end
+  def find_path(start, goal)
+    queue = []
+    queue.push([start, [start]])
 
-def on_board?(moves)
-  # takes array of moves and prints whether move is on board or off board, returns available moves
-  available_moves = []
-  moves.each do |move|
-    if move[0].between?(0, 7) && move[1].between?(0, 7)
-      puts "#{move} - On board"
-      available_moves << move
-    elsif move[0].between?(0, 7) && move[1].between?(0, 7)
-      puts "#{move} - On board"
-      available_moves << move
-    else 
-      puts "#{move} - Off board"
+    until queue.empty?
+      current, path = queue.shift
+
+      print_path(path) if current == goal
+      return path if current == goal
+
+      @graph[current].each do |neighbor|
+        unless path.include?(neighbor)
+          queue.push([neighbor, path + [neighbor]])
+        end
+      end
+    end
+
+    nil  # No path exists
+  end
+
+  def print_path(path)
+    puts "You made it in #{path.length} moves! Here's your path:"
+    path.length.times do |i|
+      p path[i]
     end
   end
-  available_moves
 end
 
-moves = possible_next_moves(position)
-p on_board?(moves)
+graph = Knight.new
 
-
-
-#Treat all possible moves the knight could make as children in a tree. Don’t allow any moves to go off the board.
-# How do I do this?...
-
-#So starting node of a tree should have children that are possible moves from that position (which we'd get from only on-board moves)
-
-#Each of those children will have children that have possible on-board mmoves from the parents location
-
-# Repeat this for each node until one of the children has coordinates for our goal move
-
-# Use algorithm to compare each path to goal nodes and find shortest path
-
-# Print out each step along the way
-
-
-
-# graph = [
-#   [0, 0, 0, 0, 0, 0, 0, 0], 
-#   [0, 0, 0, 0, 0, 0, 0, 0],  
-#   [0, 0, 0, 0, 0, 0, 0, 0],  
-#   [0, 0, 0, 0, 0, 0, 0, 0],
-#   [0, 0, 0, 0, 0, 0, 0, 0], 
-#   [0, 0, 0, 0, 0, 0, 0, 0],  
-#   [0, 0, 0, 0, 0, 0, 0, 0],  
-#   [0, 0, 0, 0, 0, 0, 0, 0]
-# ]
-
-# board = [
-#   [7, 0, 0, 0, 0, 0, 0, 0], 
-#   [6, 0, 0, 0, 0, 0, 0, 0],  
-#   [5, 0, 0, 0, 0, 0, 0, 0],  
-#   [4, 0, 0, 0, 0, 0, 0, 0],
-#   [3, 0, 0, 0, 0, 0, 0, 0], 
-#   [2, 0, 0, 0, 0, 0, 0, 0],  
-#   [1, 0, 0, 0, 0, 0, 0, 0],  
-#   [0, 1, 2, 3, 4, 5, 6, 7]
-# ]
-
-
-# Your task is to build a function knight_moves that shows the shortest possible way to get from one square to another 
-# by outputting all squares the knight will stop on along the way.
-
-# You can think of the board as having 2-dimensional coordinates. Your function would therefore look like:
-
-# knight_moves([0,0],[1,2]) == [[0,0],[1,2]]
-# knight_moves([0,0],[3,3]) == [[0,0],[1,2],[3,3]]
-# knight_moves([3,3],[0,0]) == [[3,3],[1,2],[0,0]]
-
-# Put together a script that creates a game board and a knight.
-# Treat all possible moves the knight could make as children in a tree. Don’t allow any moves to go off the board.
-# Decide which search algorithm is best to use for this case. Hint: one of them could be a potentially infinite series.
-# Use the chosen search algorithm to find the shortest path between the starting square (or node) and the ending square. 
-# Output what that full path looks like, e.g.:
-
-# > knight_moves([3,3],[4,3])
-#   => You made it in 3 moves!  Heres your path:
-#     [3,3]
-#     [4,5]
-#     [2,4]
-#     [4,3]
-
-# class Board
-# end
-
-# class Knight
-#   # Treat all possible moves the knight could make as children in a tree. Dont allow any moves to go off the board.
-
-#   def initialize
-#     @current_position
-#   end
-
-#   def possible_moves
-#   end
-
-#   def shortest_path
-#   end
-# end
+graph.find_path([0,0], [7,1])
